@@ -1,35 +1,34 @@
 import os
 import numpy as np
 import pandas as pd
-from plotly import tools
+from plotly import subplots
 import plotly.express as px
 import plotly.graph_objects as go
+import pytz
 
 # load data
 filepath = os.path.join("data", "Binance_ETHUSDC_1h.csv")
 PAIR = "ETH/USDC"
 
 hdf = pd.read_csv(filepath, skiprows=1)
-hdf["DateTime"] = pd.to_datetime(hdf["Date"])
+hdf["DateTime"] = pd.to_datetime(hdf["Date"], utc=True).dt.tz_convert(pytz.timezone('EST'))
 hdf["Date"] = hdf["DateTime"].dt.date
 hdf["Hour"] = hdf["DateTime"].dt.hour
 hdf.head()
 
-
-# plot volume by hour
+# plot ETH volume by hour
 hmean = (
     hdf.groupby("Hour")
     .apply(lambda x: x["Volume ETH"].mean())
     .reset_index(name="Mean Volume")
 )
-px.bar(hmean, x="Hour", y="Mean Volume", title=PAIR + " Mean Volume by Hour").show()
+px.bar(hmean, x="Hour", y="Mean Volume", title=PAIR + " Mean Volume by Hour (EST)").show()
 
 
 # utility fonction to compute stats on returns
 def stats(s):
     c = s["Return"]
     return pd.Series({"Mean": c.mean() * 365, "Std": c.std() * np.sqrt(365)})
-
 
 def compute_class(hdf, closing_hour, day_length, should_sort=True):
     hour_start = (closing_hour - day_length) % 24
@@ -77,9 +76,9 @@ def all_stats(hdf, closing_hours, day_lengths):
 rdf = all_stats(hdf, range(0, 24), range(6, 12))
 
 # plotting heatmaps
-varName = "Mean"
+varName = "Sharpe"
 
-fig = tools.make_subplots(
+fig = subplots.make_subplots(
     rows=1, cols=2, print_grid=False, shared_yaxes=True, subplot_titles=("Day", "Night")
 )
 
@@ -104,13 +103,15 @@ fig.append_trace(
 fig = fig.update_layout(
     title_text=PAIR + " " + varName + " during Day and Night",
     coloraxis={"colorscale": "thermal"},
+    yaxis={"title": "Closing Hour (EST)"},
+    xaxis={"title": "Day Length (h)"}
 )
 fig.show()
 
 
 # plotting time series
-ch = 14
-dl = 6
+ch = 14 # closing hour
+dl = 6  # day length
 pdf = compute_class(hdf, ch, dl)
 
 tdf = (
@@ -126,7 +127,7 @@ px.line(
     x="Date",
     y="Return",
     color="Class",
-    title="{0} cumulated returns Day vs. Night. Close: {1}h, Day Length: {2}h".format(
+    title="{0} cumulated returns Day vs. Night. Close: {1}h, Day Length: {2}h (EST)".format(
         PAIR, ch, dl
     ),
 ).show()
