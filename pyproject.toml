@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "demo-circadian-effect"
+version = "0.1.0"
+description = "Exploring the circadian effect in crypto asset"
+authors = ["Guillaume Garchery <polluxxx@gmail.com>"]
+readme = "README.md"
+packages = [{include = "demo_circadian_effect"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.25.0"
+pandas = "^2.0.3"
+plotly = "^5.15.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+matplotlib = "^3.7.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
